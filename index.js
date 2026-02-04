@@ -52,7 +52,7 @@ const UserSchema = new mongoose.Schema({
   lastUpdated: { type: Date, default: Date.now },
   registeredAt: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true }
-});
+},{timestamps: true});
 
 // Alert Schema
 const AlertSchema = new mongoose.Schema({
@@ -69,8 +69,9 @@ const AlertSchema = new mongoose.Schema({
     distance: Number,
     notifiedAt: Date 
   }],
-  active: { type: Boolean, default: true }
-});
+  active: { type: Boolean, default: true },
+  accept:{type:Number,default:0}
+},{timestamps: true});
 
 // Location History Schema
 const LocationHistorySchema = new mongoose.Schema({
@@ -79,7 +80,7 @@ const LocationHistorySchema = new mongoose.Schema({
   longitude: { type: Number, required: true },
   accuracy: { type: Number, default: 0 },
   timestamp: { type: Date, default: Date.now }
-});
+},{timestamps: true});
 
 const User = mongoose.model('User', UserSchema);
 const Alert = mongoose.model('Alert', AlertSchema);
@@ -117,7 +118,7 @@ async function checkNearbyAlerts(userId, userLat, userLon) {
         alert.latitude, alert.longitude
       );
 
-      if (distance <= 2) { // Within 2km
+      if (distance <= 5) { // Within 5km
         // Check if user was already notified
         const alreadyNotified = alert.notifiedUsers.some(
           u => u.userId === userId
@@ -204,11 +205,12 @@ app.post('/api/user/register', async (req, res) => {
 });
 
 // Update User Location
+// Update User Location
 app.post('/api/location/update', async (req, res) => {
   try {
     const { userId, latitude, longitude, accuracy } = req.body;
 
-    console.log(`📍 Location update from: ${userId}`);
+    console.log(`📍 Location update from: ${userId} at ${latitude}, ${longitude}`);
 
     // Update user location
     const user = await User.findOneAndUpdate(
@@ -232,21 +234,63 @@ app.post('/api/location/update', async (req, res) => {
     });
     await history.save();
 
-    // Check for nearby alerts
+    // *** NEW: Check for nearby alerts ***
     const nearbyAlerts = await checkNearbyAlerts(userId, latitude, longitude);
 
     if (nearbyAlerts.length > 0) {
       console.log(`🚨 User ${userId} is near ${nearbyAlerts.length} alert(s)!`);
+      
+      // Log each alert
+      nearbyAlerts.forEach((alert, i) => {
+        console.log(`  Alert ${i+1}: ${alert.sender} - ${alert.distance.toFixed(2)}km away`);
+      });
     }
 
     res.json({ 
       success: true,
       message: 'Location updated',
-      nearbyAlerts: nearbyAlerts 
+      nearbyAlerts: nearbyAlerts  // *** Send back nearby alerts ***
     });
   } catch (error) {
     console.error('❌ Error updating location:', error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/api/getalert/accept/:alertId",async(req,res)=>{
+  try{
+    const{alertId}=req.params;
+    if(!alertId){
+      return res.status(400).json({success:false,error:'Alert ID is required'});
+    }
+    const alert=await Alert.findOne({alertId});
+    if(!alert){ 
+      return res.status(404).json({success:false,error:'Alert not found'});
+    }
+    res.json({success:true,acceptCount:alert.accept});
+  }catch(error){
+     console.error('❌ Error fetching alert accept count:',error);
+     res.status(500).json({success:false,error:error.message});
+  }
+});
+
+app.put("/api/alert/accept/:alertId",async(req,res)=>{
+  try{
+    const{alertId}=req.params;
+    if(!alertId){
+      return res.status(400).json({success:false,error:'Alert ID is required'});
+    }
+    const alert=await Alert.findOne({alertId});
+    if(!alert){
+      return res.status(404).json({success:false,error:'Alert not found'});
+    }
+    alert.accept+=1;
+    await alert.save();
+    console.log(`✅ Alert accepted: ${alertId}`);
+    res.json({success:true,message:'Alert accepted',acceptCount:alert.accept});
+  }catch(error){
+    console.error('❌ Error accepting alert:',error);
+    res.status(500).json({success:false,error:error.message});
   }
 });
 
