@@ -153,8 +153,6 @@ async function checkNearbyAlerts(userId, userLat, userLon) {
   }
 }
 
-// ========== API ENDPOINTS ==========
-
 // Register User
 app.post('/api/user/register', async (req, res) => {
   try {
@@ -204,7 +202,6 @@ app.post('/api/user/register', async (req, res) => {
   }
 });
 
-// Update User Location
 // Update User Location
 app.post('/api/location/update', async (req, res) => {
   try {
@@ -257,9 +254,9 @@ app.post('/api/location/update', async (req, res) => {
   }
 });
 
-app.get("/api/getalert/accept/:alertId",async(req,res)=>{
+app.get("/api/alert/getaccept",async(req,res)=>{
   try{
-    const{alertId}=req.params;
+    const{alertId}=req.body;
     if(!alertId){
       return res.status(400).json({success:false,error:'Alert ID is required'});
     }
@@ -274,9 +271,9 @@ app.get("/api/getalert/accept/:alertId",async(req,res)=>{
   }
 });
 
-app.put("/api/alert/accept/:alertId",async(req,res)=>{
+app.put("/api/alert/putaccept",async(req,res)=>{
   try{
-    const{alertId}=req.params;
+    const{alertId}=req.body;
     if(!alertId){
       return res.status(400).json({success:false,error:'Alert ID is required'});
     }
