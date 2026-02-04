@@ -12,7 +12,9 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // ✅ REQUIRED
+app.use(express.urlencoded({ extended: true }))
+
 
 // const uri =  "mongodb+srv://shee:lgSlu550zs0d8Qri@cluster0.6gv8hv9.mongodb.net/safety_server?retryWrites=true&w=majority";
 const uri =  process.env.MONGO_URI;
@@ -271,9 +273,10 @@ app.get("/api/alert/getaccept",async(req,res)=>{
   }
 });
 
+
 app.put("/api/alert/putaccept",async(req,res)=>{
   try{
-    const{alertId}=req.body;
+    const{alertId}=req.query;
     if(!alertId){
       return res.status(400).json({success:false,error:'Alert ID is required'});
     }
