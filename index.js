@@ -256,7 +256,7 @@ app.post('/api/location/update', async (req, res) => {
 
 app.get("/api/alert/getaccept",async(req,res)=>{
   try{
-    const{alertId}=req.body;
+    const{alertId}=req.query;
     if(!alertId){
       return res.status(400).json({success:false,error:'Alert ID is required'});
     }
