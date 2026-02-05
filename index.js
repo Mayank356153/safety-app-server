@@ -109,7 +109,8 @@ async function checkNearbyAlerts(userId, userLat, userLon) {
     // Get all active alerts
     const activeAlerts = await Alert.find({ 
       active: true, 
-      resolved: false 
+      resolved: false ,
+      senderId: { $ne: userId }
     });
 
     const nearbyAlerts = [];
@@ -212,7 +213,7 @@ app.post('/api/location/update', async (req, res) => {
     console.log(`📍 Location update from: ${userId} at ${latitude}, ${longitude}`);
 
     // Update user location
-    const user = await User.findOneAndUpdate(
+    await User.findOneAndUpdate(
       { userId },
       { 
         latitude, 
