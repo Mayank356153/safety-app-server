@@ -5,12 +5,10 @@ const { distanceBetween } = require("geofire-common");
 
 const router = express.Router();
 
-/**
- * CREATE HELP REQUEST (from GSM / webhook)
- */
+
 router.post("/create", async (req, res) => {
   const { phone, lat, lng } = req.body;
-
+console.log("Creating help request for", phone, lat, lng);
   await db.collection("help_requests").add({
     phone,
     lat,
